@@ -12,7 +12,6 @@ osv_query_1(
   ecosystem = NULL,
   commit = NULL,
   purl = NULL,
-  page_token = NA,
   parse = TRUE,
   cache = TRUE,
   ...
@@ -24,7 +23,6 @@ osv_query_1(
   ecosystem = NULL,
   commit = NULL,
   purl = NULL,
-  page_token = NA,
   parse = TRUE,
   cache = TRUE,
   ...
@@ -36,7 +34,6 @@ osv_query_1(
   ecosystem = NULL,
   commit = NULL,
   purl = NULL,
-  page_token = NA,
   parse = TRUE,
   cache = TRUE,
   ...
@@ -52,8 +49,6 @@ osv_query_1(
 \item{commit}{Commit hash to query against (do not use when version set).}
 
 \item{purl}{URL for package (do not use if name or ecosystem set).}
-
-\item{page_token}{When large number of results, next response to complete set requires a page_token.}
 
 \item{parse}{Boolean value to set if the content field should be parsed from JSON list format.}
 
@@ -77,8 +72,9 @@ values are parsed into a \code{data.frame}.
 
 }}
 \examples{
+\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 osv_query_1(commit = '6879efc2c1596d11a6a6ad296f80063b558d5e0f')
-
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \href{https://ossf.github.io/osv-schema/#affectedpackage-field}{Ecosystem list}

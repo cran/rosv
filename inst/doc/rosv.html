@@ -369,6 +369,13 @@ functionality but first we must load the package!</p>
 return a <code>TRUE</code>/<code>FALSE</code> response informing you if
 that package has ever been listed with a vulnerability.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">is_pkg_vulnerable</span>(<span class="fu">c</span>(<span class="st">&#39;dask&#39;</span>, <span class="st">&#39;dash&#39;</span>), <span class="at">ecosystem =</span> <span class="fu">c</span>(<span class="st">&#39;PyPI&#39;</span>, <span class="st">&#39;PyPI&#39;</span>))</span></code></pre></div>
+<pre><code>#&gt;  dask  dash 
+#&gt;  TRUE FALSE</code></pre>
+<p>The number of vulnerabilities detected for each package can also be
+queried.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">osv_count_vulns</span>(<span class="fu">c</span>(<span class="st">&#39;dask&#39;</span>, <span class="st">&#39;readxl&#39;</span>, <span class="st">&#39;dplyr&#39;</span>), <span class="fu">c</span>(<span class="st">&#39;PyPI&#39;</span>, <span class="st">&#39;CRAN&#39;</span>, <span class="st">&#39;CRAN&#39;</span>))</span></code></pre></div>
+<pre><code>#&gt;   dask readxl  dplyr 
+#&gt;      1      3      0</code></pre>
 </div>
 <div id="list-package-vulnerabilities" class="section level3">
 <h3>List package vulnerabilities</h3>
@@ -376,13 +383,39 @@ that package has ever been listed with a vulnerability.</p>
 ecosystem’s packages (e.g. PyPI or CRAN) listed in the OSV database.
 This can be achieved using high-level functions such as
 <code>osv_query()</code> and <code>create_osv_list()</code>.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Query one package in PyPI for vulnerabilities</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>pkg_vul <span class="ot">&lt;-</span> <span class="fu">osv_query</span>(<span class="st">&#39;dask&#39;</span>, <span class="at">ecosystem =</span> <span class="st">&#39;PyPI&#39;</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">create_osv_list</span>(pkg_vul)</span></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Pull the entire set of PyPI vulnerability data</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>pypi_vul <span class="ot">&lt;-</span> <span class="fu">create_osv_list</span>(<span class="at">ecosystem =</span> <span class="st">&#39;PyPI&#39;</span>)</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>pypi_vul</span></code></pre></div>
+<p>To start we can query one package in PyPI for vulnerabilities.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>pkg_vul <span class="ot">&lt;-</span> <span class="fu">osv_query</span>(<span class="st">&#39;dask&#39;</span>, <span class="at">ecosystem =</span> <span class="st">&#39;PyPI&#39;</span>, <span class="at">all_affected =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>Use the OSV query to generate a sorted and de-duplicated list of just
+package name and version.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>pkg_tbl <span class="ot">&lt;-</span> <span class="fu">create_osv_list</span>(pkg_vul, <span class="at">as.data.frame =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">head</span>(pkg_tbl, <span class="dv">3</span>)</span></code></pre></div>
+<pre><code>#&gt;   name versions
+#&gt; 1 dask   0.10.0
+#&gt; 2 dask   0.10.1
+#&gt; 3 dask   0.10.2</code></pre>
+<p>Pull the entire set of PyPI vulnerability data and de-duplicate</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>pkg_vul <span class="ot">&lt;-</span> <span class="fu">osv_query</span>(<span class="at">ecosystem =</span> <span class="st">&#39;PyPI&#39;</span>, <span class="at">all_affected =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>pypi_vul <span class="ot">&lt;-</span> <span class="fu">create_osv_list</span>(pkg_vul, <span class="at">as.data.frame =</span> <span class="cn">FALSE</span>, <span class="at">NA_value =</span> <span class="st">&#39; &#39;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">head</span>(pypi_vul, <span class="dv">3</span>)</span></code></pre></div>
+<pre><code>#&gt; [1] &quot;aaiohttp\t &quot;           &quot;accesscontrol\t2.13.0&quot; &quot;accesscontrol\t2.13.1&quot;</code></pre>
 </div>
+</div>
+<div id="scan-an-r-project" class="section level2">
+<h2>Scan an R project</h2>
+<p>Packages discovered within an R project (such as {renv} LOCK files
+and installed packages at <code>.libPaths()</code>) can be parsed and
+scanned directly using <code>osv_scan()</code>. A
+<code>data.frame</code> is returned with the package name and a logical
+value specifying if a vulnerability was discovered in the OSV database.
+If a particular scanning mode does not exist, similar functionality can
+be created if a package list and associated version information is
+passed to <code>is_pkg_vulnerable()</code>.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">osv_scan</span>(<span class="st">&#39;r_project&#39;</span>)</span></code></pre></div>
+<pre><code>#&gt;         name version ecosystem is_vul
+#&gt; 1 commonmark   1.9.0      CRAN   TRUE
+#&gt; 2   jsonlite   1.8.7      CRAN   TRUE
+#&gt; 3    askpass   1.2.0      CRAN  FALSE
+#&gt; 4       base   4.3.1      CRAN  FALSE</code></pre>
 </div>
 <div id="use-api-helpers-directly" class="section level2">
 <h2>Use API helpers directly</h2>
@@ -391,20 +424,24 @@ response contained within the R6 object. These are more flexible than
 their higher-level alternatives. By default, the results of these
 functions will be cached. This can be overriden by specifying
 <code>cache = FALSE</code>.</p>
-<p>The higher-level API query function <code>osv_query()</code> aligns
-returned content type and parsing method, making it the preferred choice
-for the typical use-case.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Returns entire response object to parse as you please.</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">osv_query_1</span>(<span class="st">&#39;dask&#39;</span>, <span class="at">ecosystem =</span> <span class="st">&#39;PyPI&#39;</span>)</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co"># Returns the vulnerability IDs for packages in list</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="fu">osv_querybatch</span>(<span class="st">&#39;dask&#39;</span>, <span class="at">ecosystem =</span> <span class="st">&#39;PyPI&#39;</span>)</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co"># Return vulnerabilities from different ecosystems as vectors</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="fu">osv_querybatch</span>(<span class="fu">c</span>(<span class="st">&#39;dask&#39;</span>, <span class="st">&#39;readxl&#39;</span>), <span class="at">ecosystem =</span> <span class="fu">c</span>(<span class="st">&#39;PyPI&#39;</span>, <span class="st">&#39;CRAN&#39;</span>))</span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a></span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co"># Grab details by vulns ID</span></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="fu">osv_vulns</span>(<span class="st">&#39;PYSEC-2021-387&#39;</span>)</span></code></pre></div>
+<p>The higher-level API query function <code>osv_query()</code> builds
+upon these helpers to align the format of returned content, making it
+the preferred choice for typical use-cases.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Returns entire response object to parse as you please.</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">osv_query_1</span>(<span class="st">&#39;dask&#39;</span>, <span class="at">ecosystem =</span> <span class="st">&#39;PyPI&#39;</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co"># Returns the vulnerability IDs for packages in list</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="fu">osv_querybatch</span>(<span class="st">&#39;dask&#39;</span>, <span class="at">ecosystem =</span> <span class="st">&#39;PyPI&#39;</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co"># Return vulnerabilities from different ecosystems as vectors</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="fu">osv_querybatch</span>(<span class="fu">c</span>(<span class="st">&#39;dask&#39;</span>, <span class="st">&#39;readxl&#39;</span>), <span class="at">ecosystem =</span> <span class="fu">c</span>(<span class="st">&#39;PyPI&#39;</span>, <span class="st">&#39;CRAN&#39;</span>))</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co"># Grab details by vulns ID</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="fu">osv_vulns</span>(<span class="st">&#39;PYSEC-2021-387&#39;</span>)</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co"># Download vulns for an ecosystem</span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="fu">osv_download</span>(<span class="st">&#39;PYSEC-2021-387&#39;</span>, <span class="st">&#39;PyPI&#39;</span>)</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="fu">osv_download</span>(<span class="at">ecosystem =</span> <span class="st">&#39;PyPI&#39;</span>, <span class="at">download_only =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 </div>
 <div id="result-caching" class="section level2">
 <h2>Result caching</h2>
@@ -413,12 +450,18 @@ for the typical use-case.</p>
 cache results using <code>memoise::memoise()</code>. The caching can be
 turned off directly using function parameters or globally reset using
 <code>clear_osv_cache()</code>. Caching is the default behavior to help
-enforce polite access of the OSV API.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Query without caching</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">osv_query</span>(<span class="st">&#39;dask&#39;</span>, <span class="at">ecosystem =</span> <span class="st">&#39;PyPI&#39;</span>, <span class="at">cache =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co"># Clear cache, as needed</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">clear_osv_cache</span>()</span></code></pre></div>
+enforce polite access of the OSV API. When clearing the cache, all
+vulnerability files saved to disk at the temporary R session location
+will also be removed (refer to the environment variable
+<code>ROSV_CACHE_GLOBAL</code>).</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Query without caching</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="fu">osv_query</span>(<span class="st">&#39;dask&#39;</span>, <span class="at">ecosystem =</span> <span class="st">&#39;PyPI&#39;</span>, <span class="at">cache =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co"># File will be saved to disk</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="fu">osv_download</span>(<span class="st">&#39;PYSEC-2021-387&#39;</span>, <span class="st">&#39;PyPI&#39;</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co"># Clear cache, as needed</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="fu">clear_osv_cache</span>()</span></code></pre></div>
 </div>
 <div id="creating-a-cross-referenced-whitelist" class="section level2">
 <h2>Creating a cross-referenced whitelist</h2>
@@ -431,15 +474,16 @@ versions, this is often difficult. The following method will take a
 vector of packages (from PyPI) and cross-reference against the OSV
 database. If packages are identified they are either entirely dropped,
 or the specific versions with flagged vulnerabilities are excluded.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># List of packages of interest</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>python_pkg <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&#39;dask&#39;</span>, <span class="st">&#39;tensorflow&#39;</span>, <span class="st">&#39;keras&#39;</span>)</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co"># Create the xref whitelist</span></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>pypi_vul <span class="ot">&lt;-</span> <span class="fu">create_osv_list</span>(<span class="at">as.data.frame =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>xref_pkg_list <span class="ot">&lt;-</span> <span class="fu">create_ppm_xref_whitelist</span>(python_pkg, pypi_vul)</span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co"># Output requirements.txt which can be used with PPM product</span></span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="fu">writeLines</span>(xref_pkg_list, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&#39;requirements.txt&#39;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># List of packages of interest</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>python_pkg <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&#39;dask&#39;</span>, <span class="st">&#39;dash&#39;</span>, <span class="st">&#39;keras&#39;</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co"># Create the xref whitelist</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>xref_pkg_list <span class="ot">&lt;-</span> <span class="fu">create_xref_whitelist</span>(python_pkg,</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>                                       <span class="at">ecosystem =</span> <span class="st">&#39;PyPI&#39;</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>                                       <span class="at">output_format =</span> <span class="st">&#39;requirements.txt&#39;</span>)</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co"># Output requirements.txt which can be used with PPM product</span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="fu">writeLines</span>(xref_pkg_list, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&#39;requirements.txt&#39;</span>))</span></code></pre></div>
 </div>
 
 

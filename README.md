@@ -1,13 +1,19 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# rosv
+# rosv <a href="https://al-obrien.github.io/rosv/"><img src="man/figures/logo.png" align="right" height="139" alt="rosv website" /></a>
 
 <!-- badges: start -->
 
+[![CRAN
+status](https://www.r-pkg.org/badges/version/rosv)](https://CRAN.R-project.org/package=rosv)
+[![CRAN
+checks](https://badges.cranchecks.info/summary/rosv.svg)](https://cran.r-project.org/web/checks/check_results_rosv.html)
 [![R-CMD-check](https://github.com/al-obrien/rosv/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/al-obrien/rosv/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/al-obrien/rosv/branch/master/graph/badge.svg)](https://app.codecov.io/gh/al-obrien/rosv?branch=master)
+[![Dependencies](https://tinyverse.netlify.com/badge/rosv)](https://cran.r-project.org/package=rosv)
+[![](http://cranlogs.r-pkg.org/badges/grand-total/rosv?color=blue)](https://cran.r-project.org/package=rosv)
 <!-- badges: end -->
 
 ## Overview
@@ -19,7 +25,9 @@ repositories across various open source ecosystems such as CRAN,
 Bioconductor, PyPI, and many more. Queries made against the OSV database
 are useful to check for package vulnerabilities (including by specific
 versions) enumerated in package management files such as
-`requirements.txt` (Python) and `renv.lock` (R).
+`requirements.txt` (Python) and `renv.lock` (R). Checking valid query
+construction, API response pagination, and parsing content are all
+handled by {rosv}.
 
 Various helper functions assist in the administration of [Posit Package
 Manager](https://packagemanager.posit.co/client/#/) or similar services.
@@ -45,24 +53,39 @@ remotes::install_github('al-obrien/rosv')
 
 ## Basic usage
 
-Provide a package name and related ecosystem to fetch any identified
-vulnerabilities.
+The fastest and simplest way to get started with {rosv} is to use the
+`osv_query()` function.
 
-``` r
-osv_query('dask', ecosystem = 'PyPI')
-```
+1.  Provide a package name and related ecosystem to fetch any identified
+    vulnerabilities.
 
-Multiple packages can be queried at the same time and across ecosystems.
+    ``` r
+    osv_query('dask', ecosystem = 'PyPI')
+    ```
 
-``` r
-osv_query(c('dask', 'readxl', 'dplyr'),
-          ecosystem = c('PyPI', 'CRAN', 'CRAN'))
-```
+2.  Query multiple packages at the same time and across ecosystems.
+
+    ``` r
+    osv_query(c('dask', 'readxl', 'dplyr'),
+              ecosystem = c('PyPI', 'CRAN', 'CRAN'))
+    ```
+
+3.  Return results only for packages provided and not others that may be
+    part of the same vulnerability.
+
+    ``` r
+    osv_query('apache-airflow', ecosystem = 'PyPI', all_affected = FALSE)
+    ```
+
+4.  Download all vulnerabilities listed for an ecosystem.
+
+    ``` r
+    osv_query(ecosystem = 'CRAN', all_affected = FALSE)
+    ```
 
 ## Development notes
 
-{rosv} is still a young project. There are plans to extend its use.
-Currently it uses R6 classes for its low-level interface to the OSV API.
-Pagination functionality will be added once it is offered by {httr2},
-which at time of writing is available but experimental. There are also
-plans to have more types of returned details and parsing of content.
+{rosv} leverages {httr2} and {httptest2} for its core API client
+functionality and uses R6 classes for its low-level interface to the OSV
+API. There are also plans to have more types of returned details and
+parsing of content.
