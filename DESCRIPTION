@@ -1,7 +1,7 @@
 Package: rosv
 Title: Client to Access and Operate on the 'Open Source Vulnerability'
         API
-Version: 0.5.0
+Version: 0.5.1
 Authors@R: 
     person("Allen", "OBrien", , "allen.g.obrien@gmail.com", role = c("aut", "cre", "cph"))
 Description: Connect, query, and operate on information available from the 
@@ -24,8 +24,8 @@ URL: https://al-obrien.github.io/rosv/,
 BugReports: https://github.com/al-obrien/rosv/issues
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2023-11-23 17:11:02 UTC; allen
+Packaged: 2023-12-04 17:24:26 UTC; allen
 Author: Allen OBrien [aut, cre, cph]
 Maintainer: Allen OBrien <allen.g.obrien@gmail.com>
 Repository: CRAN
-Date/Publication: 2023-11-23 17:30:02 UTC
+Date/Publication: 2023-12-04 17:40:02 UTC
